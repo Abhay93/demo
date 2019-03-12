@@ -1,0 +1,48 @@
+<section>
+	<div>
+		<ul class="post-list">
+			<li>Right click on the project, then select Anypoint Platform -> Deploy To Cloud</li>
+			<li>Sign in to anypoint platform account on the next dialog that opens.</li>
+			<li>On the next screen, it will ask to configure Runtime Version, Worker Size, Workers, etc. Click Deploy Application.
+				<table>
+					<tr>
+						<th><b>Field</b></th>
+						<th><b>Description</b></th>
+					</tr>
+					<tr>
+						<td><b>Application Name</b></td>
+						<td>Name of App on cloudhub. Only letters, numbers or dashes allowed.The format of the URL for application is http://appname.region.cloudhub.io.</td>
+					</tr>
+					<tr>
+						<td><b>Deployment Target</b></td>
+						<td>When deploying to cloudhub, this field is disabled. If you have servers  </td>
+					</tr>
+					<tr>
+						<td><b>Application File</b></td>
+						<td>The Zip (in Mule 3.9) or JAR (Mule 4) file which will be deployed on cloudhub</td>
+					</tr>
+					<tr>
+						<td><b>Runtime</b></td>
+						<td>In the Runtime Tab, select Runtime Version, Worker Size and number of Workers. By default runtime version is the one application is configured to use.</td>
+					</tr>
+					<tr>
+						<td><b>Properties</b></td>
+						<td>If the applciation uses external properties, those can be defined in the properties tab.</td>
+					</tr>
+					<tr>
+						<td><b>Insight</b></td>
+						<td></td>
+					</tr>
+					<tr>
+						<td><b>Logging</b></td>
+						<td>The logging tab allows to configure log levels.</td>
+					</tr>
+					<tr>
+						<td><b>Static IPs</b></td>
+						<td></td>
+					</tr>
+				</table>
+			</li>
+			
+	</div>
+</section>
