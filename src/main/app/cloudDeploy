@@ -1,48 +1,88 @@
-<section>
-	<div>
-		<ul class="post-list">
-			<li>Right click on the project, then select Anypoint Platform -> Deploy To Cloud</li>
-			<li>Sign in to anypoint platform account on the next dialog that opens.</li>
-			<li>On the next screen, it will ask to configure Runtime Version, Worker Size, Workers, etc. Click Deploy Application.
-				<table>
-					<tr>
-						<th><b>Field</b></th>
-						<th><b>Description</b></th>
-					</tr>
-					<tr>
-						<td><b>Application Name</b></td>
-						<td>Name of App on cloudhub. Only letters, numbers or dashes allowed.The format of the URL for application is http://appname.region.cloudhub.io.</td>
-					</tr>
-					<tr>
-						<td><b>Deployment Target</b></td>
-						<td>When deploying to cloudhub, this field is disabled. If you have servers  </td>
-					</tr>
-					<tr>
-						<td><b>Application File</b></td>
-						<td>The Zip (in Mule 3.9) or JAR (Mule 4) file which will be deployed on cloudhub</td>
-					</tr>
-					<tr>
-						<td><b>Runtime</b></td>
-						<td>In the Runtime Tab, select Runtime Version, Worker Size and number of Workers. By default runtime version is the one application is configured to use.</td>
-					</tr>
-					<tr>
-						<td><b>Properties</b></td>
-						<td>If the applciation uses external properties, those can be defined in the properties tab.</td>
-					</tr>
-					<tr>
-						<td><b>Insight</b></td>
-						<td></td>
-					</tr>
-					<tr>
-						<td><b>Logging</b></td>
-						<td>The logging tab allows to configure log levels.</td>
-					</tr>
-					<tr>
-						<td><b>Static IPs</b></td>
-						<td></td>
-					</tr>
-				</table>
-			</li>
-			
-	</div>
-</section>
+format_version: 2
+environments:
+  Test-env:
+    pipelines:
+      - MuleSoft-Yaml-pipeline
+pipelines:
+  MuleSoft-Yaml-pipeline:
+    group: MuleSoft
+    materials:
+      mygit:  # this is the name of material
+        # says about type of material and url at once
+        git: ssh://git@10.0.1.38:7999/scp/temasek-cicd-api.git
+        branch: develop
+        auto_update: true
+    stages:
+      - staticCodeAnalysisStage: # name of stage
+          jobs:
+            sonarAnalysisJob: # name of the job
+              tasks:
+                - exec: # indicates type of task
+                    run_if: passed
+                    command: bash
+                    arguments:
+                    - -c
+                    - mvn sonar:sonar -Dsonar.host.url=http://10.210.54.201:9000 -Dsonar.projectKey=Mule_Project -Dsonar.projectName=temasek-api -Dsonar.projectVersion=1.0 -Dsonar.sources=. -Dsonar.mule.binaries=.
+                - exec: # indicates type of task
+                    run_if: passed
+                    command: bash
+                    arguments:
+                    - -c
+                    - sleep 10
+                - exec: # indicates type of task
+                    run_if: passed
+                    command: bash
+                    arguments:
+                    - -c
+                    - curl -X POST -i -H 'Authorization:Basic YWRtaW46YWRtaW4=' 'http://10.210.54.201:9000/api/qualitygates/project_status?projectKey=Mule_Project' | cut -d '{' -f 3 | cut -d ':' -f 2 | cut -d ',' -f 1 | grep -c "OK"
+      - testStage: # name of stage
+          jobs:
+            testJob: # name of the job
+              tasks:
+                - exec: # indicates type of task
+                    run_if: passed
+                    command: bash
+                    arguments:
+                    - -c
+                    - mvn clean test -Denv=dev
+              artifacts:
+                - build:
+                    source: target/site/munit/coverage/summary.html
+                - build:
+                    source: target/site/munit/coverage/temasek-api-report.html
+                - build:
+                    source: target/site/munit/coverage/temasek-integration-cle-report.html
+                - build:
+                    source: target/site/munit/coverage/api-error-handler-report.html
+                - build:
+                    source: target/site/munit/coverage/munit-coverage.json
+      - buildStage: # name of stage
+          jobs:
+            buildJob: # name of the job
+              tasks:
+                - exec: # indicates type of task
+                    run_if: passed
+                    command: bash
+                    arguments:
+                    - -c
+                    - mvn install -DskipMunitTests
+      - jfrogDeployStage: # name of stage
+          jobs:
+            deployJob: # name of the job
+              tasks:
+                - exec: # indicates type of task
+                    run_if: passed
+                    command: bash
+                    arguments:
+                    - -c
+                    - mvn -e -X deploy -DskipMunitTests -DskipInstall -Djfrog.repo.host=repo.test.cloud.thdm.local -Djfrog.repo.url=http://repo.test.cloud.thdm.local/artifactory/libs-release -P jfrogDeploy
+      - cloudhubDeployStage: # name of stage
+          jobs:
+            deployJob: # name of the job
+              tasks:
+                - exec: # indicates type of task
+                    run_if: passed
+                    command: bash
+                    arguments:
+                    - -c
+                    - mvn deploy -DmuleDeploy -DskipMunitTests -DskipInstall -Denv=dev -Danypoint.client_id=81dc47a47af14c3e914e87323c1dd1a5 -Danypoint.client_secret=d0569b9497E24e4A8e8Cd68307ffFe44 -Danypoint.environment=Development -Danypoint.server=cloudhub -Danypoint.businessGroup="Compaz\Temasek Holding Pte Ltd" -P cloudDeploy
