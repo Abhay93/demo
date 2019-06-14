@@ -23,3 +23,19 @@ securitySchemes:
       accessTokenUri:
         https://temasek-muleoauth-provider.sg-s1.cloudhub.io/oauth/token
       authorizationGrants: client_credentials
+
+
+################################
+oauth config
+<oauth2-provider:config name="OAuth2Provider"
+		providerName="${secure::oauth.provider.name}"
+		resourceOwnerSecurityProvider="resourceOwnerSecurityProvider"
+		clientSecurityProvider="clientSecurityProvider" supportedGrantTypes="${secure::allSupportedGrantTypes}"
+		listenerConfig="listenerConfig" clientStore="clientObjectStore">
+		<oauth2-provider:token-config path="${secure::token.path}"
+			tokenStore="tokenObjectStore" tokenTtl="${secure::token.ttl}">
+			<oauth2-provider:refresh-token-strategy>
+				<oauth2-provider:multiple-refresh-tokens />
+			</oauth2-provider:refresh-token-strategy>
+		</oauth2-provider:token-config>
+	</oauth2-provider:config>
